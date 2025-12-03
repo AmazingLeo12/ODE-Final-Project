@@ -2,33 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
-mu = 1.0          # gravitational parameter (nondimensional)
-D_drag = 0.02     # constant drag magnitude
-
-# Initial conditions: start from circular orbit of radius 1
-# r(0) = (1, 0), v(0) = (0, 1)
+mu = 1.0          
+D_drag = 0.02     
 r0 = np.array([1.0, 0.0])
 v0 = np.array([0.0, 1.0])
-
-# State vector y = [x, y, vx, vy]
 y0 = np.concatenate((r0, v0))
 
 t0 = 0.0
-T = 40.0          # total simulation time
-dt = 1e-3         # time step
+T = 40.0         
+dt = 1e-3         
 
 
-# ============================================================
+
 # ODE system with gravity + constant-magnitude drag
-# ============================================================
-
 def rhs(t, y):
-    """
-    Right-hand side for:
-        r'' = -mu * r / |r|^3 - D_drag * v_hat,
-    where v_hat is the unit vector in the direction of velocity.
-    y = [x, y, vx, vy]
-    """
     x, y_pos, vx, vy = y
 
     r_vec = np.array([x, y_pos])
@@ -53,14 +40,8 @@ def rhs(t, y):
     return np.array([vx, vy, a_total[0], a_total[1]])
 
 
-# ============================================================
 # RK4 integrator
-# ============================================================
-
 def rk4_step(f, t, y, h):
-    """
-    One step of classical fourth-order Runge–Kutta (RK4).
-    """
     k1 = f(t, y)
     k2 = f(t + 0.5*h, y + 0.5*h*k1)
     k3 = f(t + 0.5*h, y + 0.5*h*k2)
@@ -69,9 +50,6 @@ def rk4_step(f, t, y, h):
 
 
 def integrate_orbit(f, y0, t0, T, dt):
-    """
-    Integrate the ODE from t0 to T with step size dt.
-    """
     N = int(np.round((T - t0) / dt)) + 1
     t_vals = np.linspace(t0, T, N)
     y_vals = np.zeros((N, 4))
@@ -83,15 +61,10 @@ def integrate_orbit(f, y0, t0, T, dt):
     return t_vals, y_vals
 
 
-# ============================================================
-# Energies and angular momentum (now *not* conserved)
-# ============================================================
+
+# Energies and angular momentum 
 
 def compute_energy_and_angular_momentum(y_vals):
-    """
-    Compute mechanical energy E(t) and z-component of angular momentum Lz(t)
-    for a unit-mass particle in 2D plane with drag.
-    """
     x = y_vals[:, 0]
     y = y_vals[:, 1]
     vx = y_vals[:, 2]
@@ -107,15 +80,9 @@ def compute_energy_and_angular_momentum(y_vals):
     return E, Lz
 
 
-# ============================================================
-# Plotting utilities
-# ============================================================
 
+# Plotting utilities
 def add_image(ax, img_path, xy, zoom=0.15):
-    """
-    Add an image at coordinate xy on the given axes.
-    If the file is missing, this silently fails and returns None.
-    """
     try:
         img = plt.imread(img_path)
     except FileNotFoundError:
@@ -128,24 +95,18 @@ def add_image(ax, img_path, xy, zoom=0.15):
 
 
 def plot_orbit_with_images(t_vals, y_vals):
-    """
-    Plot the orbit in the x-y plane, using:
-      - earth.png for the central body
-      - satellite.png at the final satellite position
-    If the images are not found, fall back to simple markers.
-    """
     x = y_vals[:, 0]
     y = y_vals[:, 1]
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.plot(x, y, linestyle='-', linewidth=1.0, label='Orbit with drag')
 
-    earth_added = add_image(ax, 'earth.png', (0.0, 0.0), zoom=0.15)
+    earth_added = add_image(ax, 'Earth.png', (0.0, 0.0), zoom=0.15)
     if earth_added is None:
         ax.scatter(0.0, 0.0, s=200, label='Earth')
 
     x_sat, y_sat = x[-1], y[-1]
-    sat_added = add_image(ax, 'satellite.png', (x_sat, y_sat), zoom=0.05)
+    sat_added = add_image(ax, 'Sat.png', (x_sat, y_sat), zoom=0.05)
     if sat_added is None:
         ax.scatter(x_sat, y_sat, s=50, label='Satellite (final)')
 
@@ -159,10 +120,6 @@ def plot_orbit_with_images(t_vals, y_vals):
 
 
 def plot_energy_and_ang_momentum(t_vals, E, Lz):
-    """
-    Plot change in energy and change in angular momentum over time.
-    With drag, these should **decrease** monotonically on average.
-    """
     E0 = E[0]
     L0 = Lz[0]
     dE = E - E0
@@ -184,10 +141,7 @@ def plot_energy_and_ang_momentum(t_vals, E, Lz):
     plt.tight_layout()
 
 
-# ============================================================
 # Main driver
-# ============================================================
-
 def main():
     t_vals, y_vals = integrate_orbit(rhs, y0, t0, T, dt)
 
